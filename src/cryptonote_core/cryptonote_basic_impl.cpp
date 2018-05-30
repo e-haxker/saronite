@@ -76,19 +76,31 @@ namespace cryptonote {
     return CRYPTONOTE_MAX_TX_SIZE;
   }
   //-----------------------------------------------------------------------------------------------
-  bool get_block_reward(size_t median_size, size_t current_block_size, uint64_t already_generated_coins, uint64_t &reward, uint64_t height) {
+  bool get_block_reward(size_t median_size, size_t current_block_size, uint64_t already_generated_coins, uint64_t &reward, uint64_t height, uint8_t version) {
     
     uint64_t base_reward;
     uint64_t round_factor = 10000000; // 1 * pow(10, 7)
     if (height > 0)
     {
-      if (height < (PEAK_COIN_EMISSION_HEIGHT + COIN_EMISSION_HEIGHT_INTERVAL)) {
-        uint64_t interval_num = height / COIN_EMISSION_HEIGHT_INTERVAL;
-        double money_supply_pct = 0.1888 + interval_num*(0.023 + interval_num*0.0032);
-        base_reward = ((uint64_t)(MONEY_SUPPLY * money_supply_pct)) >> EMISSION_SPEED_FACTOR;
+      if(version < 4) {
+        if (height < (PEAK_COIN_EMISSION_HEIGHT + COIN_EMISSION_HEIGHT_INTERVAL)) {
+          uint64_t interval_num = height / COIN_EMISSION_HEIGHT_INTERVAL;
+          double money_supply_pct = 0.1888 + interval_num*(0.023 + interval_num*0.0032);
+          base_reward = ((uint64_t)(MONEY_SUPPLY * money_supply_pct)) >> EMISSION_SPEED_FACTOR;
+        }
+        else{
+          base_reward = (MONEY_SUPPLY - already_generated_coins) >> EMISSION_SPEED_FACTOR;
+        }
       }
-      else{
-        base_reward = (MONEY_SUPPLY - already_generated_coins) >> EMISSION_SPEED_FACTOR;
+      else
+      {
+        const int target_minutes = target / 60; // target_minutes = 1
+        const int emission_speed_factor = EMISSION_SPEED_FACTOR_PER_MINUTE;
+        uint64_t base_reward = (MONEY_SUPPLY - already_generated_coins) >> emission_speed_factor  / BLOCK_CORRECTION;
+        if (base_reward < FINAL_SUBSIDY_PER_MINUTE*target_minutes)
+        {
+          base_reward = FINAL_SUBSIDY_PER_MINUTE*target_minutes;
+        }
       }
     }
     else
@@ -143,6 +155,8 @@ namespace cryptonote {
     reward = reward_lo;
     return true;
   }
+
+  bool get_block_reward(size_t median_size, size_t current_block_size, uint64_t already_generated_coins, uint64_t &reward, uint8_t version)
   //------------------------------------------------------------------------------------
   uint8_t get_account_address_checksum(const public_address_outer_blob& bl)
   {
