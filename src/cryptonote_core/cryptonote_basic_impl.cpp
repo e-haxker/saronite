@@ -94,12 +94,13 @@ namespace cryptonote {
       }
       else
       {
-        const int target_minutes = target / 60; // target_minutes = 1
-        const int emission_speed_factor = EMISSION_SPEED_FACTOR_PER_MINUTE;
-        uint64_t base_reward = (MONEY_SUPPLY - already_generated_coins) >> emission_speed_factor  / BLOCK_CORRECTION;
-        if (base_reward < FINAL_SUBSIDY_PER_MINUTE*target_minutes)
+        const int target_minutes = DIFFICULTY_TARGET / 60; // target_minutes = 1
+        const int emission_speed_factor = EMISSION_SPEED_FACTOR - (target_minutes-1);
+        base_reward = (MONEY_SUPPLY - already_generated_coins) >> emission_speed_factor;
+        base_reward = base_reward / BLOCK_CORRECTION;
+        if (base_reward < FINAL_SUBSIDY*target_minutes)
         {
-          base_reward = FINAL_SUBSIDY_PER_MINUTE*target_minutes;
+          base_reward = FINAL_SUBSIDY*target_minutes;
         }
       }
     }
@@ -155,8 +156,6 @@ namespace cryptonote {
     reward = reward_lo;
     return true;
   }
-
-  bool get_block_reward(size_t median_size, size_t current_block_size, uint64_t already_generated_coins, uint64_t &reward, uint8_t version)
   //------------------------------------------------------------------------------------
   uint8_t get_account_address_checksum(const public_address_outer_blob& bl)
   {
