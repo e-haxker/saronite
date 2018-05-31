@@ -12,7 +12,7 @@ Saronite is a cryptonote currency and an indirect for of the well-known Monero c
 Some main differences compared to other cryptonote coins are:
 
  - We use a 60 second block window which reduce transaction times
- - We enforce a minimum transaction mixin of 2 to fight blockchain analysis which could compromise privacy
+ - We enforce a minimum transaction mixin of 10 to fight blockchain analysis which could compromise privacy
  - We actively cooperate with other cryptonote coins and do not treat them as competition.
 
 
