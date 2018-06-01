@@ -86,7 +86,7 @@ static const struct {
   { 1, 1, 0, 1482806500 },
   { 2, 10, 0, 1524272502 },
   { 3, 20, 0, 1524348153 },
-  { 4, 40310, 0, 1529669969 } // Roughly 21 June 2018
+  { 4, 27885, 0, 1528675199 } // Roughly 10th June 2018
 };
 static const uint64_t mainnet_hard_fork_version_1_till = (uint64_t)-1;
 
@@ -1021,8 +1021,8 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
 
   std::vector<size_t> last_blocks_sizes;
   get_last_n_blocks_sizes(last_blocks_sizes, CRYPTONOTE_REWARD_BLOCKS_WINDOW);
-
-  if (!get_block_reward(epee::misc_utils::median(last_blocks_sizes), cumulative_block_size, already_generated_coins, base_reward, m_db->height()))
+  
+  if (!get_block_reward(epee::misc_utils::median(last_blocks_sizes), cumulative_block_size, already_generated_coins, base_reward, m_db->height(),  get_current_hard_fork_version()))
   {
     LOG_PRINT_L1("block size " << cumulative_block_size << " is bigger than allowed for this blockchain");
     return false;
@@ -1118,7 +1118,7 @@ bool Blockchain::create_block_template(block& b, const account_public_address& m
   size_t txs_size;
   uint64_t fee;
   uint8_t hf_version = m_hardfork->get_current_version();
-  if (!m_tx_pool.fill_block_template(b, median_size, already_generated_coins, txs_size, fee, height))
+  if (!m_tx_pool.fill_block_template(b, median_size, already_generated_coins, txs_size, fee, height, hf_version))
   {
     return false;
   }
@@ -2741,7 +2741,8 @@ bool Blockchain::check_fee(size_t blob_size, uint64_t fee)
   uint64_t cal_height = height - height % COIN_EMISSION_HEIGHT_INTERVAL;
   uint64_t cal_generated_coins = cal_height ? m_db->get_block_already_generated_coins(cal_height - 1) : 0;
   uint64_t base_reward;
-  if (!get_block_reward(median, 1, cal_generated_coins, base_reward, height))
+  uint8_t version = get_current_hard_fork_version();
+  if (!get_block_reward(median, 1, cal_generated_coins, base_reward, height, version))
     return false;
   fee_per_kb = get_dynamic_per_kb_fee(base_reward, median);
 
@@ -2778,7 +2779,8 @@ uint64_t Blockchain::get_dynamic_per_kb_fee_estimate(uint64_t grace_blocks)
   uint64_t cal_height = height - height % COIN_EMISSION_HEIGHT_INTERVAL;
   uint64_t cal_generated_coins = cal_height ? m_db->get_block_already_generated_coins(cal_height - 1) : 0;
   uint64_t base_reward;
-  if (!get_block_reward(median, 1, cal_generated_coins, base_reward, height))
+  uint8_t version = get_current_hard_fork_version();
+  if (!get_block_reward(median, 1, cal_generated_coins, base_reward, height, version))
   {
     LOG_PRINT_L1("Failed to determine block reward, using placeholder " << print_money(BLOCK_REWARD_OVERESTIMATE) << " as a high bound");
     base_reward = BLOCK_REWARD_OVERESTIMATE;
